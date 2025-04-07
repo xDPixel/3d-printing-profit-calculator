@@ -3,49 +3,120 @@ from tkinter import ttk, messagebox, scrolledtext
 
 USD_TO_SAR = 3.75
 
+translations = {
+    'en': {
+        'title': '3D Printing Pricing Calculator',
+        'input_data': 'Printing Data',
+        'time': 'Printing Duration (hours):',
+        'weight': 'Filament Weight (g):',
+        'filament_price': 'Filament Price ($ per gram):',
+        'calculate': 'Calculate Price',
+        'reset': 'Reset',
+        'dark_mode': 'Dark Mode',
+        'result': 'Calculation Result',
+        'error': 'Error',
+        'error_msg': 'Please ensure all fields contain valid numbers.',
+        'material_cost': 'Material Cost',
+        'printer_cost': 'Printer Cost',
+        'total_cost': 'Total Cost',
+        'suggested_price': 'Suggested Price',
+        'profit_30': ' (30% Profit)',
+        'profit_50': ' (50% Profit)',
+        'profit_100': ' (100% Profit)',
+        'currency_sar': 'SAR',
+        'currency_usd': 'USD'
+    },
+    'ar': {
+        'title': 'حاسبة تسعير الطباعة ثلاثية الأبعاد',
+        'input_data': 'بيانات الطباعة',
+        'time': 'مدة الطباعة (ساعات):',
+        'weight': 'وزن الفتيل (جرام):',
+        'filament_price': 'سعر الفتيل ($ لكل جرام):',
+        'calculate': 'احسب السعر',
+        'reset': 'إعادة تعيين',
+        'dark_mode': 'الوضع الداكن',
+        'result': 'نتيجة الحساب',
+        'error': 'خطأ',
+        'error_msg': 'تأكد من إدخال أرقام صحيحة في كل الحقول.',
+        'material_cost': 'تكلفة المواد',
+        'printer_cost': 'تكلفة الطابعة',
+        'total_cost': 'التكلفة الإجمالية',
+        'suggested_price': 'السعر المقترح',
+        'profit_30': ' (30٪ ربح)',
+        'profit_50': ' (50٪ ربح)',
+        'profit_100': ' (100٪ ربح)',
+        'currency_sar': 'ريال سعودي',
+        'currency_usd': 'دولار أمريكي'
+    }
+}
+
 class PriceCalculator(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("حاسبة تسعير الطباعة ثلاثية الأبعاد")
+        self.language = 'ar'
+        self.dark_mode = tk.BooleanVar(value=False)
+
+        self.title(translations[self.language]['title'])
         self.geometry("700x550")
         self.minsize(700, 550)
-
-        self.dark_mode = tk.BooleanVar(value=False)
 
         self.create_widgets()
         self.apply_theme()
 
     def create_widgets(self):
-        input_frame = ttk.LabelFrame(self, text="بيانات الطباعة")
-        input_frame.pack(fill="x", padx=10, pady=10)
+        self.input_frame = ttk.LabelFrame(self, text=translations[self.language]['input_data'])
+        self.input_frame.pack(fill="x", padx=10, pady=10)
 
         self.entries = {}
 
-        fields = [("مدة الطباعة (ساعات):", "time"),
-                  ("وزن الفتيل (جرام):", "weight"),
-                  ("سعر الفتيل ($ لكل جرام):", "filament_price")]
+        self.fields = [('time', translations[self.language]['time']),
+                       ('weight', translations[self.language]['weight']),
+                       ('filament_price', translations[self.language]['filament_price'])]
 
-        for i, (label, key) in enumerate(fields):
-            ttk.Label(input_frame, text=label).grid(row=i, column=0, padx=5, pady=5, sticky="w")
-            entry = ttk.Entry(input_frame)
+        for i, (key, label) in enumerate(self.fields):
+            ttk.Label(self.input_frame, text=label).grid(row=i, column=0, padx=5, pady=5, sticky="w")
+            entry = ttk.Entry(self.input_frame)
             entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
             self.entries[key] = entry
 
-        input_frame.columnconfigure(1, weight=1)
+        self.input_frame.columnconfigure(1, weight=1)
 
-        btn_frame = ttk.Frame(self)
-        btn_frame.pack(fill="x", padx=10, pady=5)
+        self.btn_frame = ttk.Frame(self)
+        self.btn_frame.pack(fill="x", padx=10, pady=5)
 
-        ttk.Button(btn_frame, text="احسب السعر", command=self.calculate).pack(side="left", expand=True, fill="x", padx=5)
-        ttk.Button(btn_frame, text="إعادة تعيين", command=self.reset_fields).pack(side="left", expand=True, fill="x", padx=5)
-        ttk.Checkbutton(btn_frame, text="الوضع الداكن", variable=self.dark_mode, command=self.apply_theme).pack(side="left", expand=True, fill="x", padx=5)
+        self.calc_btn = ttk.Button(self.btn_frame, text=translations[self.language]['calculate'], command=self.calculate)
+        self.calc_btn.pack(side="left", expand=True, fill="x", padx=5)
 
-        result_frame = ttk.LabelFrame(self, text="نتيجة الحساب")
-        result_frame.pack(fill="both", padx=10, pady=10, expand=True)
+        self.reset_btn = ttk.Button(self.btn_frame, text=translations[self.language]['reset'], command=self.reset_fields)
+        self.reset_btn.pack(side="left", expand=True, fill="x", padx=5)
 
-        self.result_text = scrolledtext.ScrolledText(result_frame, state="disabled", wrap="word")
+        self.theme_check = ttk.Checkbutton(self.btn_frame, text=translations[self.language]['dark_mode'], variable=self.dark_mode, command=self.apply_theme)
+        self.theme_check.pack(side="left", expand=True, fill="x", padx=5)
+
+        self.lang_btn = ttk.Button(self.btn_frame, text="EN/AR", command=self.switch_language)
+        self.lang_btn.pack(side="left", expand=True, fill="x", padx=5)
+
+        self.result_frame = ttk.LabelFrame(self, text=translations[self.language]['result'])
+        self.result_frame.pack(fill="both", padx=10, pady=10, expand=True)
+
+        self.result_text = scrolledtext.ScrolledText(self.result_frame, state="disabled", wrap="word")
         self.result_text.pack(expand=True, fill="both", padx=5, pady=5)
+
+    def switch_language(self):
+        self.language = 'en' if self.language == 'ar' else 'ar'
+        self.update_ui()
+
+    def update_ui(self):
+        trans = translations[self.language]
+        self.title(trans['title'])
+        self.input_frame.config(text=trans['input_data'])
+        for i, (key, _) in enumerate(self.fields):
+            self.input_frame.grid_slaves(row=i, column=0)[0].config(text=trans[key])
+        self.calc_btn.config(text=trans['calculate'])
+        self.reset_btn.config(text=trans['reset'])
+        self.theme_check.config(text=trans['dark_mode'])
+        self.result_frame.config(text=trans['result'])
 
     def calculate(self):
         try:
@@ -59,52 +130,42 @@ class PriceCalculator(tk.Tk):
 
             total_cost_sar = material_cost_sar + machine_cost_sar
 
-            prices = {
-                'تكلفة المواد': (material_cost_sar, material_cost_usd),
-                'تكلفة الطابعة': (machine_cost_sar, machine_cost_sar / USD_TO_SAR),
-                'التكلفة الإجمالية': (total_cost_sar, total_cost_sar / USD_TO_SAR),
-                'السعر المقترح (30٪ ربح)': (total_cost_sar * 1.3, (total_cost_sar * 1.3) / USD_TO_SAR),
-                'السعر المقترح (50٪ ربح)': (total_cost_sar * 1.5, (total_cost_sar * 1.5) / USD_TO_SAR),
-                'السعر المقترح (100٪ ربح)': (total_cost_sar * 2.0, (total_cost_sar * 2.0) / USD_TO_SAR),
-            }
-
-            self.show_results(prices)
+            self.show_results(material_cost_sar, machine_cost_sar, total_cost_sar)
 
         except ValueError:
-            messagebox.showerror("خطأ", "تأكد من إدخال أرقام صحيحة في كل الحقول.")
+            messagebox.showerror(translations[self.language]['error'], translations[self.language]['error_msg'])
 
-    def show_results(self, prices):
+    def show_results(self, material_sar, machine_sar, total_sar):
         self.result_text.config(state="normal")
         self.result_text.delete("1.0", tk.END)
 
-        for label, (sar, usd) in prices.items():
-            self.result_text.insert(tk.END, f"{label}: {sar:.2f} ريال سعودي ({usd:.2f} دولار أمريكي)\n")
+        trans = translations[self.language]
+        results = [
+            (trans['material_cost'], material_sar),
+            (trans['printer_cost'], machine_sar),
+            (trans['total_cost'], total_sar),
+            (trans['suggested_price'] + trans['profit_30'], total_sar * 1.3),
+            (trans['suggested_price'] + trans['profit_50'], total_sar * 1.5),
+            (trans['suggested_price'] + trans['profit_100'], total_sar * 2.0)
+        ]
+
+        for label, sar in results:
+            usd = sar / USD_TO_SAR
+            self.result_text.insert(tk.END, f"{label}: {sar:.2f} {trans['currency_sar']} ({usd:.2f} {trans['currency_usd']})\n")
 
         self.result_text.config(state="disabled")
 
     def reset_fields(self):
         for entry in self.entries.values():
             entry.delete(0, tk.END)
-
         self.result_text.config(state="normal")
         self.result_text.delete("1.0", tk.END)
         self.result_text.config(state="disabled")
 
     def apply_theme(self):
         style = ttk.Style()
-
-        if self.dark_mode.get():
-            self.configure(bg="#2b2b2b")
-            style.theme_use("clam")
-            style.configure('.', background="#2b2b2b", foreground="#ffffff", fieldbackground="#3b3b3b")
-            style.map("TButton", background=[("active", "#4a4a4a")])
-            self.result_text.configure(bg="#3b3b3b", fg="#ffffff")
-        else:
-            self.configure(bg="#f0f0f0")
-            style.theme_use("default")
-            style.configure('.', background="#f0f0f0", foreground="#000000", fieldbackground="#ffffff")
-            style.map("TButton", background=[("active", "#e5e5e5")])
-            self.result_text.configure(bg="#ffffff", fg="#000000")
+        theme = "clam" if self.dark_mode.get() else "default"
+        style.theme_use(theme)
 
 if __name__ == "__main__":
     app = PriceCalculator()
